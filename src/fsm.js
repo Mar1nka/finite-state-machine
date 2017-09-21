@@ -34,6 +34,7 @@ class FSM {
             if (this.currentState != state) {
                 this.prevHistory.push(this.currentState);
                 this.currentState = state;
+                this.nextHistory = [];
             }
         }
         else{
