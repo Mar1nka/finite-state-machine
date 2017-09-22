@@ -1,3 +1,5 @@
+const Stack = require('./stack');
+
 class FSM {
     /**
      * Creates new FSM instance.
@@ -7,8 +9,11 @@ class FSM {
         if (arguments.length === 0) {
             throw new Error();
         } else {
-            this.prevHistory = [];
-            this.nextHistory = [];
+            var previousStateStack = [];
+            this.previousStateStack = new Stack();
+
+            var nextStateStack = [];
+            this.nextStateStack = new Stack();
 
             this.stateInitial = config.initial;
             this.currentState = config.initial;
@@ -32,9 +37,9 @@ class FSM {
     changeState(state) {
         if (state in this.states) {
             if (this.currentState != state) {
-                this.prevHistory.push(this.currentState);
+                this.previousStateStack.push(this.currentState);
                 this.currentState = state;
-                this.nextHistory = [];
+                this.nextStateStack.clean();
             }
         }
         else{
@@ -47,18 +52,16 @@ class FSM {
      * @param event
      */
     trigger(event) {
-        var stateObj = [];
+        var stateObj = {};
         var isFound = false;
 
-        for(var key in this.states) {
-            if (key === this.currentState) {
-                stateObj[key] = this.states[key];
+        for(var keyState in this.states) {
+            if (keyState === this.currentState) {
+                stateObj[keyState] = this.states[keyState];
 
-                for (var key2 in stateObj[key].transitions) {
-                    if (key2 === event) {
-
-                        var state = stateObj[key].transitions[key2];
-
+                for (var keyTransition in stateObj[keyState].transitions) {
+                    if (keyTransition === event) {
+                        var state = stateObj[keyState].transitions[keyTransition];
                         this.changeState(state);
 
                         isFound = true;
@@ -92,17 +95,15 @@ class FSM {
     getStates(event) {
         var states = [];
         if(arguments.length === 0) {
-
-            for(var key in this.states) {
-                states.push(key);
+            for(var keySate in this.states) {
+                states.push(keySate);
             }
 
         } else {
-
-            for(var key in this.states) {
-                for( var key2 in this.states[key].transitions) {
-                    if(key2 === event) {
-                        states.push(key);
+            for(var keySate in this.states) {
+                for( var keyTransition in this.states[keySate].transitions) {
+                    if(keyTransition === event) {
+                        states.push(keySate);
                     }
                 }
             }
@@ -117,15 +118,14 @@ class FSM {
      * @returns {Boolean}
      */
     undo() {
-        if(this.prevHistory.length === 0) {
+        if(this.previousStateStack.length() === 0) {
             return false;
         }else {
-            if(this.nextHistory[this.nextHistory.length - 1] != this.currentState) {
-                this.nextHistory.push(this.currentState);
+            if(this.nextStateStack.getLastElement() != this.currentState) {
+                this.nextStateStack.push(this.currentState);
             }
 
-            this.currentState = this.prevHistory[this.prevHistory.length - 1]
-            this.prevHistory.splice(this.prevHistory.length - 1, 1);
+            this.currentState = this.previousStateStack.pop();
 
             return true;
         }
@@ -137,12 +137,11 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-        if(this.nextHistory.length === 0) {
+        if(this.nextStateStack.length() === 0) {
             return false;
         }else {
-            this.prevHistory.push(this.currentState);
-            this.currentState = this.nextHistory[this.nextHistory.length - 1];
-            this.nextHistory.splice(this.nextHistory.length - 1, 1);
+            this.previousStateStack.push(this.currentState);
+            this.currentState = this.nextStateStack.pop();
 
             return true;
         }
@@ -152,8 +151,8 @@ class FSM {
      * Clears transition history
      */
     clearHistory() {
-        this.prevHistory = [];
-        this.nextHistory = [];
+        this.previousStateStack.clean();
+        this.nextStateStack.clean();
         this.currentState = this.stateInitial;
     }
 }
