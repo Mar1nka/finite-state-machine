@@ -6,19 +6,19 @@ class FSM {
      * @param config
      */
     constructor(config) {
-        if (arguments.length === 0) {
+        if (!config) {
             throw new Error();
-        } else {
-            var previousStateStack = [];
-            this.previousStateStack = new Stack();
-
-            var nextStateStack = [];
-            this.nextStateStack = new Stack();
-
-            this.stateInitial = config.initial;
-            this.currentState = config.initial;
-            this.states = config.states;
         }
+
+        var previousStateStack = [];
+        this.previousStateStack = new Stack();
+
+        var nextStateStack = [];
+        this.nextStateStack = new Stack();
+
+        this.stateInitial = config.initial;
+        this.currentState = config.initial;
+        this.states = config.states;
     }
 
 
@@ -35,17 +35,18 @@ class FSM {
      * @param state
      */
     changeState(state) {
-        if (state in this.states) {
-            if (this.currentState != state) {
-                this.previousStateStack.push(this.currentState);
-                this.currentState = state;
-                this.nextStateStack.clean();
-            }
-        }
-        else{
+        if (!this.states[state]) {
             throw new Error();
         }
+        if ((this.currentState !== state)) {
+            this.previousStateStack.push(this.currentState);
+            this.currentState = state;
+            this.nextStateStack.clean();
+        }
+
+
     }
+
 
     /**
      * Changes state according to event transition rules.
@@ -53,9 +54,8 @@ class FSM {
      */
     trigger(event) {
         var stateObj = {};
-        var isFound = false;
 
-        for(var keyState in this.states) {
+        for (var keyState in this.states) {
             if (keyState === this.currentState) {
                 stateObj[keyState] = this.states[keyState];
 
@@ -64,19 +64,14 @@ class FSM {
                         var state = stateObj[keyState].transitions[keyTransition];
                         this.changeState(state);
 
-                        isFound = true;
-                        break;
+                        return;
                     }
                 }
             }
-            if (isFound === true) {
-                break;
-            }
         }
 
-        if(isFound === false) {
-            throw new Error();
-        }
+
+        throw new Error();
     }
 
     /**
@@ -94,18 +89,18 @@ class FSM {
      */
     getStates(event) {
         var states = [];
-        if(arguments.length === 0) {
-            for(var keySate in this.states) {
-                states.push(keySate);
-            }
 
-        } else {
-            for(var keySate in this.states) {
-                for( var keyTransition in this.states[keySate].transitions) {
-                    if(keyTransition === event) {
+        if (event) {
+            for (var keySate in this.states) {
+                for (var keyTransition in this.states[keySate].transitions) {
+                    if (keyTransition === event) {
                         states.push(keySate);
                     }
                 }
+            }
+        } else {
+            for (var keySate in this.states) {
+                states.push(keySate);
             }
         }
 
@@ -118,10 +113,10 @@ class FSM {
      * @returns {Boolean}
      */
     undo() {
-        if(this.previousStateStack.length() === 0) {
+        if (this.previousStateStack.length() === 0) {
             return false;
-        }else {
-            if(this.nextStateStack.getLastElement() != this.currentState) {
+        } else {
+            if (this.nextStateStack.getLastElement() != this.currentState) {
                 this.nextStateStack.push(this.currentState);
             }
 
@@ -137,9 +132,9 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-        if(this.nextStateStack.length() === 0) {
+        if (this.nextStateStack.length() === 0) {
             return false;
-        }else {
+        } else {
             this.previousStateStack.push(this.currentState);
             this.currentState = this.nextStateStack.pop();
 
