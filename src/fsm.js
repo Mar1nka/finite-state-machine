@@ -46,10 +46,7 @@ class FSM {
             throw new Error();
         }
 
-        var previousStateStack = [];
         this.previousStateStack = new Stack();
-
-        var nextStateStack = [];
         this.nextStateStack = new Stack();
 
         this.stateInitial = config.initial;
@@ -79,8 +76,6 @@ class FSM {
             this.currentState = state;
             this.nextStateStack.clean();
         }
-
-
     }
 
 
@@ -93,11 +88,9 @@ class FSM {
 
         for (var keyState in this.states) {
             if (keyState === this.currentState) {
-                stateObj[keyState] = this.states[keyState];
-
-                for (var keyTransition in stateObj[keyState].transitions) {
+                for (var keyTransition in this.states[keyState].transitions) {
                     if (keyTransition === event) {
-                        var state = stateObj[keyState].transitions[keyTransition];
+                        var state = this.states[keyState].transitions[keyTransition];
                         this.changeState(state);
 
                         return;
@@ -149,7 +142,7 @@ class FSM {
      * @returns {Boolean}
      */
     undo() {
-        if (this.previousStateStack.length() === 0) {
+        if (!this.previousStateStack.length()) {
             return false;
         } else {
             if (this.nextStateStack.getLastElement() != this.currentState) {
@@ -168,7 +161,7 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-        if (this.nextStateStack.length() === 0) {
+        if (!this.nextStateStack.length()) {
             return false;
         } else {
             this.previousStateStack.push(this.currentState);
